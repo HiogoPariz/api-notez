@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/HiogoPariz/api-notez/internal/api"
+	"github.com/HiogoPariz/api-notez/internal/migration"
 	"github.com/HiogoPariz/api-notez/internal/storage"
 )
 
@@ -14,8 +15,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Init db connection
-	if err := store.Init(); err != nil {
+	if err := migration.Run(store); err != nil {
 		log.Fatal(err)
 	}
 
