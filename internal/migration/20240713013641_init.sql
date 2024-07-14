@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS note(
   id serial PRIMARY KEY,
   title VARCHAR(32),
-  content VARCHAR(32),
+  file_name VARCHAR(32),
   active BOOLEAN,
   created_at TIMESTAMP,
   updated_at TIMESTAMP

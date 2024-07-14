@@ -5,21 +5,21 @@ import (
 
 	"github.com/HiogoPariz/api-notez/internal/api"
 	"github.com/HiogoPariz/api-notez/internal/migration"
-	"github.com/HiogoPariz/api-notez/internal/storage"
+	"github.com/HiogoPariz/api-notez/internal/repository"
 )
 
 func main() {
 	// Init db connection
-	store, err := storage.NewPostgresStore()
+	repo, err := repository.NewPostgresStore()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := migration.Run(store); err != nil {
+	// Run migrations
+	if err := migration.Run(repo); err != nil {
 		log.Fatal(err)
 	}
 
 	// Start api server
-	server := api.NewAPIServer(":3000", store)
-	server.Run()
+	api.Init(repo)
 }
