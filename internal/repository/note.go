@@ -8,13 +8,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var NoteService NoteRepository = &RepoService{}
-
-type RepoService struct {
-	PostgresRepository
+type NoteRepository struct {
+	DB *sql.DB
 }
 
-type NoteRepository interface {
+type INoteRepository interface {
 	CreateNote(*dto.NoteDTO) error
 	DeleteNote(int) error
 	UpdateNote(*dto.NoteDTO) error
@@ -22,12 +20,16 @@ type NoteRepository interface {
 	GetNotes() ([]*dto.NoteDTO, error)
 }
 
-func (service *RepoService) CreateNote(note *dto.NoteDTO) error {
+func CreateNoteRepository(db *sql.DB) INoteRepository {
+	return &NoteRepository{DB: db}
+}
+
+func (repo *NoteRepository) CreateNote(note *dto.NoteDTO) error {
 	query := `
-	INSERT INTO note (title, content, active, created_at, updated_at) 
+	INSERT INTO note (title, file_name, active, created_at, updated_at) 
 	VALUES ($1, $2, $3, $4, $5)
 	`
-	resp, err := GetDB(&service.PostgresRepository).Exec(
+	resp, err := repo.DB.Exec(
 		query,
 		note.Title,
 		note.FileName,
@@ -44,17 +46,17 @@ func (service *RepoService) CreateNote(note *dto.NoteDTO) error {
 	return nil
 }
 
-func (service *RepoService) UpdateNote(note *dto.NoteDTO) error {
+func (repo *NoteRepository) UpdateNote(note *dto.NoteDTO) error {
 	query := `
 	UPDATE note 
   SET title = $1,
-      content = $2, 
+      file_name = $2, 
       active = $3,
       created_at = $4,
       updated_at = $5
   WHERE id = $6
   )`
-	resp, err := GetDB(&service.PostgresRepository).Exec(
+	resp, err := repo.DB.Exec(
 		query,
 		note.Title,
 		note.FileName,
@@ -72,8 +74,8 @@ func (service *RepoService) UpdateNote(note *dto.NoteDTO) error {
 	return nil
 }
 
-func (service *RepoService) DeleteNote(id int) error {
-	_, err := GetDB(&service.PostgresRepository).Exec(`UPDATE note
+func (repo *NoteRepository) DeleteNote(id int) error {
+	_, err := repo.DB.Exec(`UPDATE note
 	 SET active = false
 	 WHERE id = $1
 	`, id)
@@ -81,10 +83,8 @@ func (service *RepoService) DeleteNote(id int) error {
 	return err
 }
 
-func (service *RepoService) GetNoteByID(id int) (*dto.NoteDTO, error) {
-	rows, err := GetDB(
-		&service.PostgresRepository,
-	).Query("SELECT * FROM note n WHERE n.id = $1", id)
+func (repo *NoteRepository) GetNoteByID(id int) (*dto.NoteDTO, error) {
+	rows, err := repo.DB.Query("SELECT * FROM note n WHERE n.id = $1", id)
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +94,8 @@ func (service *RepoService) GetNoteByID(id int) (*dto.NoteDTO, error) {
 	return nil, fmt.Errorf("note.%d not found", id)
 }
 
-func (service *RepoService) GetNotes() ([]*dto.NoteDTO, error) {
-	rows, err := GetDB(
-		&service.PostgresRepository,
-	).Query("SELECT * FROM note n WHERE n.active = true")
+func (repo *NoteRepository) GetNotes() ([]*dto.NoteDTO, error) {
+	rows, err := repo.DB.Query("SELECT * FROM note n WHERE n.active = true")
 	if err != nil {
 		return nil, err
 	}

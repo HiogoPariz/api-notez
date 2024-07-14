@@ -4,13 +4,13 @@ import (
 	"log"
 
 	"github.com/HiogoPariz/api-notez/internal/api"
+	"github.com/HiogoPariz/api-notez/internal/db"
 	"github.com/HiogoPariz/api-notez/internal/migration"
-	"github.com/HiogoPariz/api-notez/internal/repository"
 )
 
 func main() {
 	// Init db connection
-	repo, err := repository.NewPostgresStore()
+	repo, err := db.NewPostgresStore()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,14 +1,17 @@
 package api
 
 import (
-	"github.com/HiogoPariz/api-notez/internal/repository"
+	"database/sql"
+
 	"github.com/gin-gonic/gin"
 )
 
-func Init(repo *repository.PostgresRepository) {
+func Init(db *sql.DB) {
 	router := gin.Default()
-
-	router.GET("/note", GetNotes)
+	noteService := CreateNoteService(db)
+	router.GET("/note", noteService.GetNotes)
+	router.GET("/note/:id", noteService.GetNoteByID)
+	router.POST("/note", noteService.CreateNote)
 
 	if err := router.Run(":3000"); err != nil {
 		panic(err)

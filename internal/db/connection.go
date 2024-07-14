@@ -1,12 +1,8 @@
-package repository
+package db
 
 import "database/sql"
 
-type PostgresRepository struct {
-	db *sql.DB
-}
-
-func NewPostgresStore() (*PostgresRepository, error) {
+func NewPostgresStore() (*sql.DB, error) {
 	connStr := "host=localhost user=postgres dbname=postgres password=api-notez sslmode=disable"
 
 	db, err := sql.Open("postgres", connStr)
@@ -18,11 +14,5 @@ func NewPostgresStore() (*PostgresRepository, error) {
 		return nil, err
 	}
 
-	return &PostgresRepository{
-		db,
-	}, nil
-}
-
-func GetDB(repo *PostgresRepository) *sql.DB {
-	return repo.db
+	return db, nil
 }
