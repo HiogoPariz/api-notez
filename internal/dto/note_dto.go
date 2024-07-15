@@ -16,14 +16,14 @@ type NoteDTO struct {
 }
 
 type NoteRequest struct {
-	Title    string `json:"title"`
-	FileName string `json:"file_name"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 type NoteObject struct {
-	ID       int    `json:"id"`
-	Title    string `json:"title"`
-	FileName string `json:"file_name"`
+	ID      int    `json:"id"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 func (note_dto *NoteDTO) EntityToResponse() (*NoteObject, error) {
@@ -36,10 +36,10 @@ func (note_dto *NoteDTO) EntityToResponse() (*NoteObject, error) {
 	return note_response, nil
 }
 
-func (note_req *NoteRequest) RequestToDTO() *NoteDTO {
+func (note_req *NoteRequest) RequestToDTO(file_name string) *NoteDTO {
 	return &NoteDTO{
 		Title:     note_req.Title,
-		FileName:  note_req.FileName,
+		FileName:  file_name,
 		Active:    true,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
