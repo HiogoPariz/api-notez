@@ -3,7 +3,7 @@ package db
 import "database/sql"
 
 func NewPostgresStore() (*sql.DB, error) {
-	connStr := "host=localhost user=postgres dbname=postgres password=api-notez sslmode=disable"
+	connStr := "host=localhost user=notez dbname=notez password=notez sslmode=disable"
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {

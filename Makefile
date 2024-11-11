@@ -16,3 +16,5 @@ migration:
 database:
 	@docker run --name api-notez -e POSTGRES_PASSWORD=api-notez -p 5432:5432 postgres:alpine
 
+clear-db:
+	@docker run stop api-notez && docker rm api-notez

@@ -95,7 +95,7 @@ func (repo *NoteRepository) GetNoteByID(id int) (*dto.NoteDTO, error) {
 }
 
 func (repo *NoteRepository) GetNotes() ([]*dto.NoteDTO, error) {
-	rows, err := repo.DB.Query("SELECT * FROM note n WHERE n.active = true")
+	rows, err := repo.DB.Query("SELECT * FROM note n WHERE n.active is true")
 	if err != nil {
 		return nil, err
 	}
