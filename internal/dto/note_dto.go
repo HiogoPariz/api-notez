@@ -2,9 +2,15 @@ package dto
 
 import (
 	"time"
-
 	"github.com/jinzhu/copier"
 )
+
+type Note struct {
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
 
 type NoteDTO struct {
 	ID        int       `json:"id"`
@@ -24,6 +30,10 @@ type NoteObject struct {
 	ID      int    `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
+}
+
+type NoteListById struct {
+	Notes []Note `json:"notes"`
 }
 
 func (note_dto *NoteDTO) EntityToResponse() (*NoteObject, error) {
