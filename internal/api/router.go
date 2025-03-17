@@ -3,13 +3,15 @@ package api
 import (
 	"database/sql"
 
+	"github.com/HiogoPariz/api-notez/internal/repository"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func Init(db *sql.DB) {
 	router := gin.Default()
-	noteService := createNoteService(db)
+	noteRepo := repository.CreateNoteRepository(db)
+	noteService := createNoteService(noteRepo)
 	cacheStorage := createRedisStorage()
 
 	router.Use(cors.Default())

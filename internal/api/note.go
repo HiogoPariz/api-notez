@@ -1,11 +1,12 @@
 package api
 
 import (
-	"database/sql"
+	"crypto/rand"
 	"encoding/hex"
 	"hash/fnv"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/HiogoPariz/api-notez/internal/dto"
 	"github.com/HiogoPariz/api-notez/internal/integration"
@@ -14,7 +15,7 @@ import (
 )
 
 type NoteService struct {
-	DB *sql.DB
+	repo repository.INoteRepository
 }
 
 type Notes interface {
@@ -22,15 +23,15 @@ type Notes interface {
 	GetNote(ctx *gin.Context)
 	DeleteNote(ctx *gin.Context)
 	PostNote(ctx *gin.Context)
+	GetNoteByUserId(ctx *gin.Context)
 }
 
-func createNoteService(db *sql.DB) *NoteService {
-	return &NoteService{DB: db}
+func createNoteService(repo repository.INoteRepository) *NoteService {
+	return &NoteService{repo: repo}
 }
 
 func (service NoteService) GetNotes(ctx *gin.Context) {
-	repo := repository.CreateNoteRepository(service.DB)
-	notes_dto, err := repo.GetNotes()
+	notes_dto, err := service.repo.GetNotes()
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -56,17 +57,16 @@ func (service NoteService) GetNotes(ctx *gin.Context) {
 		notes = append(notes, note_res)
 	}
 
-	ctx.JSON(200, notes)
+	ctx.JSON(http.StatusOK, notes)
 }
 
 func (service NoteService) GetNoteByID(ctx *gin.Context) {
-	repo := repository.CreateNoteRepository(service.DB)
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.AbortWithError(http.StatusNotFound, err)
 	}
 
-	note_dto, err := repo.GetNoteByID(id)
+	note_dto, err := service.repo.GetNoteByID(id)
 	if err != nil {
 		ctx.AbortWithError(http.StatusNotFound, err)
 	}
@@ -83,32 +83,72 @@ func (service NoteService) GetNoteByID(ctx *gin.Context) {
 	}
 	note.Content = content
 
-	ctx.JSON(200, note)
+	ctx.JSON(http.StatusOK, note)
 }
 
 func (service NoteService) CreateNote(ctx *gin.Context) {
-	repo := repository.CreateNoteRepository(service.DB)
-	hash := fnv.New64a()
-
 	body := &dto.NoteRequest{}
 	if err := ctx.Bind(body); err != nil {
 		ctx.AbortWithError(http.StatusUnprocessableEntity, err)
 	}
 
-	if _, err := hash.Write([]byte("note/json")); err != nil {
+	fileName, err := generateFileName()
+
+	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
-	file_name := hex.EncodeToString(hash.Sum(nil))
-	note_dto := body.RequestToDTO(file_name)
+
+	noteDto := body.RequestToDTO(fileName)
 
 	// Grava na base
-	if err := repo.CreateNote(note_dto); err != nil {
+	if err := service.repo.CreateNote(noteDto); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	// Manda pro files
-	notesIntegration := integration.CreateFileIntegration(note_dto)
-	if err := notesIntegration.CreateFileContent(body.Content, file_name); err != nil {
+	notesIntegration := integration.CreateFileIntegration(noteDto)
+	if err := notesIntegration.CreateFileContent(body.Content, fileName); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
+	ctx.JSON(http.StatusCreated, gin.H{
+		"message":  "Note created successfully",
+		"fileName": fileName,
+	})
+}
+
+func (service NoteService) GetNoteByUserId(ctx *gin.Context) {
+	userIdStr := ctx.Param("userId")
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	notes, err := service.repo.GetNoteByUserId(userId)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, notes)
+}
+
+func generateFileName() (string, error) {
+
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", err
+	}
+	randomHex := hex.EncodeToString(randomBytes)
+
+	data := time.Now().String() + randomHex
+
+	hash := fnv.New64a()
+	if _, err := hash.Write([]byte(data)); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }

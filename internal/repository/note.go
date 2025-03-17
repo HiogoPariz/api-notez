@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/HiogoPariz/api-notez/internal/dto"
 )
 
@@ -16,6 +17,7 @@ type INoteRepository interface {
 	UpdateNote(*dto.NoteDTO) error
 	GetNoteByID(int) (*dto.NoteDTO, error)
 	GetNotes() ([]*dto.NoteDTO, error)
+	GetNoteByUserId(int) (*dto.NoteListById, error)
 }
 
 func CreateNoteRepository(db *sql.DB) INoteRepository {
@@ -112,7 +114,6 @@ func (repo *NoteRepository) GetNotes() ([]*dto.NoteDTO, error) {
 
 	return notes, nil
 }
-
 
 func (repo *NoteRepository) GetNoteByUserId(userId int) (*dto.NoteListById, error) {
 	rows, err := repo.DB.Query("SELECT id, title, created_at, updated_at FROM note n WHERE n.active = true AND n.user_id = $1", userId)
