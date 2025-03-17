@@ -19,6 +19,7 @@ func Init(db *sql.DB) {
 
 	router.GET("/note", noteService.GetNotes)
 	router.GET("/note/:id", noteService.GetNoteByID)
+	router.GET("/note/usr/:userId", noteService.GetNoteByUserId)
 	router.POST("/note", noteService.CreateNote)
 
 	if err := router.Run(":3000"); err != nil {
